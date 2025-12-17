@@ -41,7 +41,7 @@ export default function Home() {
             </a>
             <a
               target="_blank"
-              href="https://twitter.com/nullpt_rs"
+              href="https://twitter.com/nullptrs"
               className="text-neutral-500 hover:text-white hover:underline"
               rel="noreferrer"
             >
