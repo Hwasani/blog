@@ -1,3 +1,7 @@
+[Fork of my GOAT's blog.](https://github.com/nullpt-rs/blog)
+
+
+
 [nullpt.rs](https://nullpt.rs)
 
 # nullpt.rs
