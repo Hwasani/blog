@@ -13,22 +13,7 @@ export default function Home() {
         className="text-center font-mono text-[0.45rem] sm:text-[0.6rem] md:text-sm lg:text-xs overflow-x-auto text-gradient-animated hidden lg:block"
         aria-hidden
       >
-        {`                                                                                                                                                                    
-                                                     .            L.                
-  .    .                                            ;W            EW:        ,ft t  
-  Di   Dt               ;                ..        f#E         .. E##;       t#E Ej 
-  E#i  E#i            .DL               ;W,      .E#f         ;W, E###t      t#E E#,
-  E#t  E#t    f.     :K#L     LWL      j##,     iWW;         j##, E#fE#f     t#E E#t
-  E#t  E#t    EW:   ;W##L   .E#f      G###,    L##Lffi      G###, E#t D#G    t#E E#t
-  E########f. E#t  t#KE#L  ,W#;     :E####,   tLLG##L     :E####, E#t  f#E.  t#E E#t
-  E#j..K#j... E#t f#D.L#L t#K:     ;W#DG##,     ,W#i     ;W#DG##, E#t   t#K: t#E E#t
-  E#t  E#t    E#jG#f  L#LL#G      j###DW##,    j#E.     j###DW##, E#t    ;#W,t#E E#t
-  E#t  E#t    E###;   L###j      G##i,,G##,  .D#j      G##i,,G##, E#t     :K#D#E E#t
-  f#t  f#t    E#K:    L#W;     :K#K:   L##, ,WK,     :K#K:   L##, E#t      .E##E E#t
-   ii   ii    EG      LE.     ;##D.    L##, EG.     ;##D.    L##, ..         G#E E#t
-              ;       ;@      ,,,      .,,  ,       ,,,      .,,              fE ,;.
-                                                                               ,                                                                  
-`}
+        {`Hwasani.com`}
       </pre>
 
       <div className="flex flex-col w-full md:w-[900px] md:border-[1px] md:border-transparent border-solid p-4 transition-all border-gradient-animated">
