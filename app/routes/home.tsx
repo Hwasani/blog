@@ -13,7 +13,13 @@ export default function Home() {
         className="text-center font-mono text-[0.45rem] sm:text-[0.6rem] md:text-sm lg:text-xs overflow-x-auto text-gradient-animated hidden lg:block"
         aria-hidden
       >
-        {`Hwasani.com`}
+        {`        
+          ▄▄▄   ▄▄▄ ▄▄▄▄  ▄▄▄  ▄▄▄▄   ▄▄▄▄    ▄▄▄▄▄▄▄   ▄▄▄▄   ▄▄▄    ▄▄▄ ▄▄▄▄▄ 
+          ███   ███ ▀███  ███  ███▀ ▄██▀▀██▄ █████▀▀▀ ▄██▀▀██▄ ████▄  ███  ███  
+          █████████  ███  ███  ███  ███  ███  ▀████▄  ███  ███ ███▀██▄███  ███  
+          ███▀▀▀███  ███▄▄███▄▄███  ███▀▀███    ▀████ ███▀▀███ ███  ▀████  ███  
+          ███   ███   ▀████▀████▀   ███  ███ ███████▀ ███  ███ ███    ███ ▄███▄ 
+        `}
       </pre>
 
       <div className="flex flex-col w-full md:w-[900px] md:border-[1px] md:border-transparent border-solid p-4 transition-all border-gradient-animated">
@@ -30,7 +36,7 @@ export default function Home() {
             </a>
             <a
               target="_blank"
-              href="https://twitter.com/nullptrs"
+              href="https://twitter.com/hwasan111"
               className="text-neutral-500 hover:text-white hover:underline"
               rel="noreferrer"
             >

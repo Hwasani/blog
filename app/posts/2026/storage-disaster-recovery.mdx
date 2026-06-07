@@ -1,6 +1,6 @@
 ---
 slug: storage-disaster-recovery
-date: May 6 2026
+date: June 6 2026
 author: hwasani
 name: "Surviving a Cascading Storage Failure"
 excerpt: "All storage fails; the only question is what it takes down with it. When a $120 datacenter drive failed twice and killed my media stack, I tore out the single-node NAS and rebuilt on distributed Ceph storage."
@@ -61,7 +61,7 @@ The third node was my old linux laptop, I figured because it has a battery backu
 
 I pretty much hit a renaissance at this point, my media server was working, I had way more storage than I needed, I had actually useful services running from my cluster, and if I wanted to I can run a Zomboid server or something on the third host. The cluster, at this point, was really serving me and it helped me learn so much about virtualization and system engineering.
 
-![Screen of my Proxmx cluster, showing a variety of guest machines and LXCs.](/posts/storage-disaster-recovery/three-node-cluster-summary.png)
+![Screen of my Proxmox cluster, showing a variety of guest machines and LXCs.](/posts/storage-disaster-recovery/three-node-cluster-summary.png)
 
 I was very happy with it.
 
@@ -177,9 +177,9 @@ One that really caught my interest was the SAN. Unlike a NAS, a SAN doesn't host
 
 The big draw is true cluster-shared storage. A SAN behaves like a giant local hard disk that multiple hosts can share. You can put VM disks on a NAS and it works fine, but a SAN skips the overhead of pushing everything over network file protocols.
 
-The catch is real SANs are expensive with things like dedicated fiber, specialized switches, large storage arrays, and the SAN itself. But vendors have built solutions that get you SAN-like block storage without the enterprise price tag. Hyper-V has Storage Spaces Direct (S2D), which everyone just calls a vSAN. We'd recently set it up on our cluster at work, and it got me wondering if Proxmox had something similar.
+The catch is real SANs are expensive with things like dedicated fiber, specialized switches, large storage arrays, and the SAN itself. But vendors have built solutions that get you SAN-like block storage without the enterprise price tag. Hyper-V has Storage Spaces Direct (S2D), which everyone just calls a vSAN.
 
-It does.
+We'd recently set it up on our cluster at work, and it got me wondering if Proxmox had something similar. And it does.
 
 ## Ceph
 
@@ -205,6 +205,6 @@ So, was it worth it? Yeah. I went from a single drive that could take down my en
 
 This is my first writeup that I've ever done like this, so any feedback, criticism, or otherwise would be greatly appreciated.
 
+# Credit
 
-
-[voidstar0](https://github.com/voidstar0): The creator of this template and very dear friend of mine.
+Thanks to [voidstar0](https://github.com/voidstar0), who is the creator of this blog template, for suggesting that I create my own blog. I didn't appreciate how well they write their posts until I tried to write my own lol.

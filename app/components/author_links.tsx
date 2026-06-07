@@ -42,6 +42,13 @@ const authorData: Record<string, AuthorInfo> = {
 		},
 		profilePicture: 'https://avatars.githubusercontent.com/u/1939757',
 	},
+	hwasani: {
+		contacts: {
+			twitter: 'https://twitter.com/hwasan111',
+			github: 'https://github.com/hwasani',
+		},
+		profilePicture: 'https://avatars.githubusercontent.com/u/113956264?v=4',
+	},
 };
 
 export type Authors = keyof typeof authorData;
