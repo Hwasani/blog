@@ -1,0 +1,209 @@
+---
+slug: storage-disaster-recovery
+date: May 6 2026
+author: hwasani
+name: "Surviving a Cascading Storage Failure"
+excerpt: "All storage fails; the only question is what it takes down with it. When a $120 datacenter drive failed twice and killed my media stack, I tore out the single-node NAS and rebuilt on distributed Ceph storage."
+keywords: disaster-recovery,disaster,catastrophe,data-loss
+---
+
+## Introduction
+
+I'm fairly new to Systems, Virtual Machines, Hypervisors, Containers.... pretty much everything in this realm was previously alien to me until about 10 months ago when I somehow landed a job as a System Administrator at my current employer. I always somehow manage to impress employers enough to like me and think that I'll learn on the job well enough to get paid for it. And for the most part I do.
+
+Well, now I need to put the time in to learn virtualization technologies and concepts. This was a skill that was absolutely necessary for my role, and I literally had NO experience with this technology. I'd done coursework for AWS and Google Cloud sure, but I've never done anything with real host machines.
+Well luckily for me, I joined right when Windows 10 was becoming EOL, so there were a TON of Windows Desktops coming back to IT and they were getting tossed straight into the dumpster. We were not running auctions or trying to even get $20 out of these machines, they were effectively e-waste to the company.
+
+I was able to get permission to take these decommissioned "trash" machines home. Obviously, the only thing wrong with these machines is just that they couldn't safely run Windows 11 anymore, but they absolutely could run the best family of OSes on it. Linux!
+
+![An old desktop computer in the messy backseat of my car.](/posts/storage-disaster-recovery/old-win10-desktop.png)
+
+## First time setup
+
+I know I said I had no experience with virtualization, and that is true. But I had a lot of experience with running Linux as my main driver for my laptop. I switched to a M1 not that long after, but Mac being Unix based meant that I was really using a lot of the same packages that I used on linux.
+But I knew that just running linux baremetal was like anti-conducive to learning in my situation, so I looked up what hypervisors people were using for homelabs. 
+
+For my purposes, there were really only 2 options. XCP-ng, which is Xen-based, and Proxmox, which is KVM-based. From my initial research, Proxmox was basically just debian with a hypervisor built into it. XCP-ng is like a micro-distro, I don't really know too much about it, to be honest. I chose the one I could pronounce easily.
+Plus, I had heard some guys at work talking about their Proxmox lab and how much they loved using it (Thanks for the suggestion Ed & Steve!) 
+
+I set it up on the old machine I took home from work, aaaand didn't know what to do from there. I watched some Youtube videos on what it was that I just installed on my machine, how to use it, and how to actually get a guest machine started up on it. 
+
+I went ahead and locally downloaded a fedora image, and loaded it from my PC into the local storage of my node. I went and set up the VM, went through the process of the install, statically assigned an IP address to the machine's VNIC, and got to tinkering!
+It really surprised me how everything just kind of worked, without any special input required from me. That was cool! But um... now what? What do people host? It's not like I can easily host a spatialOFFICE server from home... I kind of hit a road block.
+
+I setup a hypervisor and deployed a VM, why did I feel so defeated? Oh well, I basically went back to the drawing board for the next few days.
+
+![HP desktop computer, standing on the floor with a white TP-Link Deco mesh unit resting on top.](/posts/storage-disaster-recovery/proxmox-host.jpg)
+
+My partner and I had gotten into anime, specifically Attack On Titan, around that time. A friend of ours had invited us to their Plex, but it was so hard to watch with how slow their upload speed was, it buffered a lot and wasn't always accessible. Pretty miserable experience, but hey we got to watch a show that we couldn't normally watch.
+In hindsight, I'm pretty sure this is everyone's first project, but I was very excited about it. 
+
+## The actual setup
+
+I got Jellyfin running natively on a debian VM, but I could really only hold a couple seasons of whatever shows that I wanted to watch, the host machine at this time was just an old enterprise desktop with a 128GB SATA SSD in it, I really had to make the most of what resources I had.
+I was able to finish out Attack On Titan with this setup, also the video encoding performance was pretty bad, the processor did NOT support intel Quicksync. Slow encode and fast but small capacity storage got the job but we had to pace how much we watched in our sessions.
+
+I got on eBay and started looking for old server HDD to use in my machine. I found a pretty good deal for a HC530 for $120. It had a high runtime plus the listing showed the SMART data was good. Hey, whatever. 
+
+And luckily for me, I got another machine from work that had a little crappy Quadro in it, but that would fix my encode issues! Nice!
+
+![HP desktop on it's side with the side panel open, showing the motherboard, RAM, SSD, and Quadro P400.](/posts/storage-disaster-recovery/pve2-case-open.jpg)
+
+GPU passthrough was actually pretty difficult to setup, this all happened right before AI became really good at being useful, so I really was in the trenches trying to figure out how to get this all working. 
+Ultimately, after one 8 hour session, a total rebuild of my cluster, and a lot of reading, I was back in business.
+
+At this point, my rebuilt cluster had 3 nodes, 2 with 32GB, 1 with 16GB of RAM, all DDR4, 2 old intel desktop CPUs, and a Quadro P400 in one of the hosts, which was doing GPU passthrough to an LXC that was hosting Jellyfin. Everything was looking pretty good, the only thing left I had to setup was the NAS.
+
+![A 2 node Proxmox, with a TP-Link Deco mesh satellite, a Raspberry Pi, and a TP Link 8-port switch with 4 ports connected.](/posts/storage-disaster-recovery/2-node-cluster.jpg)
+
+I installed the HC530 into the host I labeled hv2, and I naively ran TrueNAS Scale VM on the same host as the Jellyfin LXC, which probably slowed down both guests quite a bit, but this was the first time my cluster really looked put together and intentional. I created an LVM on the HC530 and allocated the entirety of its space to TrueNAS, I had no intentions of running any systems off of this disk.
+The third node was my old linux laptop, I figured because it has a battery backup built-in, that it could reliably run HA services like DNS, AdGuard, Headscale, and the *arr's. I graduated this thinkpad node as what I would consider to be the main node in my cluster. 
+
+I pretty much hit a renaissance at this point, my media server was working, I had way more storage than I needed, I had actually useful services running from my cluster, and if I wanted to I can run a Zomboid server or something on the third host. The cluster, at this point, was really serving me and it helped me learn so much about virtualization and system engineering.
+
+![Screen of my Proxmx cluster, showing a variety of guest machines and LXCs.](/posts/storage-disaster-recovery/three-node-cluster-summary.png)
+
+I was very happy with it.
+
+
+## Uh oh....
+
+You might've noticed it, but I mentioned that I only bought 1 14TB HDD. I purchased it thinking "Eh, I can always upgrade later. This is just for now."
+
+Big mistake. AI really took off and anything storage or RAM related had skyrocketed. 
+ 
+I got curious and saw that the same old drive I bought was now $350. The decision to upgrade storage on my cluster was now not a matter of choice, but a matter of cost. I could not afford that.
+
+![Screenshot of the exact eBay listing I purchased my HDD from.](/posts/storage-disaster-recovery/hc530-ebay.png)
+
+Shortly thereafter, I began noticing my Jellyfin was taking a really long time to do compute tasks that were previously completing pretty quickly. Jellyfin was hanging on tasks for 24 hours, streams were slow to load, and sometimes SMB share was inaccessible. 
+
+I'm sure you're beginning to see where I'm going with this. My 14TB HC530 drive, with all of my media, personal files, and applications, started failing.
+
+![TrueNAS displaying overall state of health on my pool. ZFS health section shows a degraded pool status.](/posts/storage-disaster-recovery/truenas-zfs-health.png)
+
+Just my luck.
+
+## Incident Response
+
+I started moving as much as I could off of the NAS and put it on my PC instead, doing this I was able to free up about 4TB of data from the HC530.
+
+Eventually, when enough data was taken off from it, performance started to stabilize, the SMB and NFS shares were now accessible. I figured just so long as I didn't put any more data onto it, that everything would be okay.
+
+That kind of sucks for a media server, as you don't just watch the same stuff over and over, but at this point what choice did I have?
+
+I spun up another instance of TrueNAS on a different PVE with smaller storage and began loading media and data into that share. I could readjust my fstab customizations on my Jellyfin LXC and my ShokoDB VM, load the old migrated data from my PC onto this new NAS, and voila. Media server is back.
+
+But I was back to square one effectively, back to when I first setup my Jellyfin server. Rotating shows off and on was tedious and frustrating; I was beginning to feel like I was babysitting my entertainment with quotas on how much I watched each week to make space for a show that we wanted to watch instead of whatever was on there at the time.
+
+## Band-aids
+
+I was able to take another decommissioned machine from work and added it to my cluster. At this point, we've got quite a few SSDs across the cluster, and the only way I knew how to get that storage onto my network at the time, was with TrueNAS. (I was really not ambitious looking back at this.)
+
+I really didn't want to host 3 TrueNAS machines, it takes up a lot of RAM to run ZFS and usually people just have one NAS that they're using, especially for a cluster as small as mine. 
+
+It was around this time I just put my hands up and left it at that because I was worn down from taking care of my cluster. Which was understandable, I was starting to get looped into to real tasks at work, and I was now managing a production Hyper-V cluster. My home cluster was starting to feel like work at home.
+
+I used it normally and kind of forgot about my problems, we weren't watching as much media as before, but we would have a show running in the background on our Apple TV. 
+
+We started noticing that the streams would stop playing abruptly on Infuse. I just kept blaming the client because the website was accessible, and I was able to access media off it. Not understanding that this was foreshadowing.
+
+## Event #2
+
+At some point, I was carelessly starting to load more data onto the dataset on the HC530. 
+
+This carelessness ended up really screwing me over. The entire PVE node started to lock up, the frontend for this node was unresponsive, but SSH was working.
+ 
+I was getting large chains of SATA errors on the controller, both the Jellyfin LXC and the TrueNAS VM were completely inaccessible. Shutdowns and Stops were not working, no matter what I did. I quickly changed the config for both of these machines to not start on boot, powered down the host machine.
+
+After some time, I began powering on the host and running upstairs back to my terminal to watch it's behavior. To my surprise, both guest machines were starting up despite my configuration change. I powered them down fast enough to stop the Jellyfin LXC, but the TrueNAS VM had started trying to access the HC530 again.
+
+Having been left with only one path forward, I completely wiped the HC530, and rebooted the host. This time it came back up successfully with no issues. The SMART data for that drive was really bad. The drive was in a total failure state. I could maybe write 3GB before the drive would stop writing.
+
+Here's the SMART data from the host on this /dev/
+```text
+=== START OF READ SMART DATA SECTION ===
+SMART Error Log Version: 1
+ATA Error Count: 35179 
+// 35179 ATA errors, this drive has a huge problem.
+        CR = Command Register [HEX]
+        FR = Features Register [HEX]
+        SC = Sector Count Register [HEX]
+        SN = Sector Number Register [HEX]
+        CL = Cylinder Low Register [HEX]
+        CH = Cylinder High Register [HEX]
+        DH = Device/Head Register [HEX]
+        DC = Device Command Register [HEX]
+        ER = Error register [HEX]
+        ST = Status register [HEX]
+Powered_Up_Time is measured from power on, and printed as
+DDd+hh:mm:SS.sss where DD=days, hh=hours, mm=minutes,
+SS=sec, and sss=millisec. It "wraps" after 49.710 days.
+
+Error 35178 occurred at disk power-on lifetime: 36313 hours (1513 days + 1 hours) 
+// Note, I had this drive for less than one year, it was 3 years old when I bought it.
+  When the command that caused the error occurred, the device was active or idle.
+
+  After command completion occurred, registers were:
+  ER ST SC SN CL CH DH
+  -- -- -- -- -- -- --
+  40 53 a8 00 29 4b 40  Error: UNC 168 sectors at LBA = 0x004b2900 = 4925696 
+  // This UNC error means uncorrectable. The drive is done for.
+
+  Commands leading to the command that caused the error were:
+  CR FR SC SN CL CH DH DC   Powered_Up_Time  Command/Feature_Name
+  -- -- -- -- -- -- -- --  ----------------  --------------------
+  25 00 00 a8 28 4b e0 08  36d+01:43:54.937  READ DMA EXT
+  ca 00 10 10 12 00 e0 08  36d+01:43:45.234  WRITE DMA
+  c8 00 00 00 00 00 e0 08  36d+01:43:44.600  READ DMA
+  25 00 c0 e8 21 4b e0 08  36d+01:43:30.409  READ DMA EXT
+  35 00 10 10 0e c0 e0 08  36d+01:43:30.408  WRITE DMA EXT
+```
+
+Any action I took on this drive caused a large chain of SATA errors on the host. To not cause any issues on the host, I just completely deleted the LVM on the host, and left it at that.
+
+It's worth noting that this drive was used in a real Datacenter environment, had probably worked just fine for a few years in some large storage array for tier 3 storage purposes, so it's not entirely out of the realm of possibilities that it died, but it just sucked because I only had it for less than a year before it decided to die on me.
+
+The event was over, I lost my data. This time, when it started failing, it cascaded into a complete failure.
+But now, my cluster is completely out of large capacity storage options, I still had the low capacity dataset on that second TrueNAS instance, but I really didn't want to have to continue rotating media out until I could afford large capacity storage again.
+It was at this point I began thinking "Is this even worth it anymore?"
+
+## The Solution
+
+I mentioned I had a lot of old low-capacity SATA SSDs earlier, and I'd picked up some new-to-me tools at work. 
+
+One that really caught my interest was the SAN. Unlike a NAS, a SAN doesn't host a filesystem for clients to mount. Instead it serves raw block storage to the network, and everything you store is built out of those blocks.
+
+The big draw is true cluster-shared storage. A SAN behaves like a giant local hard disk that multiple hosts can share. You can put VM disks on a NAS and it works fine, but a SAN skips the overhead of pushing everything over network file protocols.
+
+The catch is real SANs are expensive with things like dedicated fiber, specialized switches, large storage arrays, and the SAN itself. But vendors have built solutions that get you SAN-like block storage without the enterprise price tag. Hyper-V has Storage Spaces Direct (S2D), which everyone just calls a vSAN. We'd recently set it up on our cluster at work, and it got me wondering if Proxmox had something similar.
+
+It does.
+
+## Ceph
+
+Ceph is an open-source Unified Software-Defined Storage platform, what this means is that it's feature rich, allowing for things like S3-buckets, it has a shared FS solution called CephFS, data replication, and it has block-level storage capabilities. Ceph takes the idea of cluster your compute nodes, and translates it into clustering your storage nodes.
+
+For my purposes, CephFS is the simpler, less resource-intensive solution, guests can mount it directly without TrueNAS needing to share it explicity. But ZFS gives you checksumming, scrubbing and snapshots that CephFS doesn't offer at the filesystem level.
+
+Plus, I can very easily migrate VM disks to the RBD pool once it's setup, meaning compute can easily migrate anywhere in the cluster without any regard for the local storage on the host machine.
+
+I shifted around my environment, migrated VMs off of certain drives to get enough OSDs in the Ceph cluster, cleared the LVMs on a few disks, and got the storage into my Ceph cluster. I bypassed the replication minimum requirements, since I figured because I just lost 5TB of data one time, what is 700GB of more lost data?
+
+
+![Showing a configuration menu for a VM, showing the total capacity of the RBD pool, stating 701GB.](/posts/storage-disaster-recovery/ceph-rbd-pool.png)
+
+
+This meant I could actually separate compute from storage, just like a real production environment system. I am a creature of habit and naturally spin up a TrueNAS VM, and had the Disk for that VM on the Ceph RBD pool. I also migrated a few other VMs to the Ceph RBD pool.
+
+After I got that sorted out and rebuilt permissions, I loaded media onto the new TrueNAS VM shares, and my media server was back in action. This time with way faster storage.
+
+So, was it worth it? Yeah. I went from a single drive that could take down my entire stack when it died, to storage spread across the whole cluster. More than that, I understand my own infrastructure way better than I did before any of this broke. Turns out that sometimes a catastrophic failure and total data loss is the exact right time to learn something new.
+
+## Thanks for reading!
+
+This is my first writeup that I've ever done like this, so any feedback, criticism, or otherwise would be greatly appreciated.
+
+
+
+[voidstar0](https://github.com/voidstar0): The creator of this template and very dear friend of mine.
