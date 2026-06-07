@@ -2,16 +2,16 @@ import { Feed } from '@nullptrs/feed';
 import { slugsToMetadata } from './metadata.const';
 
 const feed = new Feed({
-	title: 'nullpt.rs • blog',
+	title: 'hwasani.com • blog',
 	id: process.env.SITE_URL ?? '',
-	link: process.env.SITE_URL ?? 'https://nullpt.rs',
-	favicon: `${process.env.SITE_URL ?? 'https://nullpt.rs'}/favicon.ico`,
+	link: process.env.SITE_URL ?? 'https://hwasani.com',
+	favicon: `${process.env.SITE_URL ?? 'https://hwasani.com'}/favicon.ico`,
 	language: 'en',
 	copyright: 'CC BY-NC-SA 4.0',
 	feedLinks: {
-		atom: `${process.env.SITE_URL ?? 'https://nullpt.rs'}/feed.atom`,
-		json: `${process.env.SITE_URL ?? 'https://nullpt.rs'}/feed.json`,
-		rss: `${process.env.SITE_URL ?? 'https://nullpt.rs'}/feed.rss`,
+		atom: `${process.env.SITE_URL ?? 'https://hwasani.com'}/feed.atom`,
+		json: `${process.env.SITE_URL ?? 'https://hwasani.com'}/feed.json`,
+		rss: `${process.env.SITE_URL ?? 'https://hwasani.com'}/feed.rss`,
 	},
 });
 
@@ -23,7 +23,7 @@ Object.values(slugsToMetadata)
 			feed.addItem({
 				title: postData.name,
 				id: postData.slug,
-				link: `${process.env.SITE_URL ?? 'https://nullpt.rs'}/${postData.slug}`,
+				link: `${process.env.SITE_URL ?? 'https://hwasani.com'}/${postData.slug}`,
 				content: postData.excerpt,
 				date: new Date(postData.date),
 				author: [
