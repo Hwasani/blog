@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  const-module: 100bca361f21ba060e9b3838859bd1bb37958b6923ef6e97e9e3786795fd8ad3
+  const-module: f0a2c9d0a5978fbe51621652b28b45c11214ccef0a8abb45f11b284f52c8c9ea
 
 importers:
 
@@ -3697,7 +3697,7 @@ snapshots:
 
   comma-separated-tokens@2.0.3: {}
 
-  const-module@0.2.3(patch_hash=100bca361f21ba060e9b3838859bd1bb37958b6923ef6e97e9e3786795fd8ad3):
+  const-module@0.2.3(patch_hash=f0a2c9d0a5978fbe51621652b28b45c11214ccef0a8abb45f11b284f52c8c9ea):
     dependencies:
       tsx: 4.20.3
 
@@ -5269,7 +5269,7 @@ snapshots:
 
   vite-plugin-const@0.2.0(@types/node@20.19.2)(lightningcss@1.30.1):
     dependencies:
-      const-module: 0.2.3(patch_hash=100bca361f21ba060e9b3838859bd1bb37958b6923ef6e97e9e3786795fd8ad3)
+      const-module: 0.2.3(patch_hash=f0a2c9d0a5978fbe51621652b28b45c11214ccef0a8abb45f11b284f52c8c9ea)
       vite: 5.4.19(@types/node@20.19.2)(lightningcss@1.30.1)
     transitivePeerDependencies:
       - '@types/node'

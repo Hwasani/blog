@@ -1,5 +1,5 @@
 diff --git a/dist/entry.js b/dist/entry.js
-index 4fa66b5b37ca48bbc3291775005433d6e54648a7..7ea716175c9f678e799c60b989a980560a23bc75 100644
+index 4fa66b5b37ca48bbc3291775005433d6e54648a7..3c40ace93dd880c84cfcbe4b67e855c2024335f9 100644
 --- a/dist/entry.js
 +++ b/dist/entry.js
 @@ -14,7 +14,18 @@ async function main() {
