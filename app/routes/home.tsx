@@ -44,14 +44,6 @@ export default function Home() {
             </a>
             <a
               target="_blank"
-              href="https://hwasani.com/feed.rss"
-              className="text-neutral-500 hover:text-white hover:underline"
-              rel="noreferrer"
-            >
-              rss
-            </a>
-            <a
-              target="_blank"
               href="https://www.linkedin.com/in/aaron-zev-maldonado/"
               className="text-neutral-500 hover:text-white hover:underline"
               rel="noreferrer"
@@ -62,8 +54,16 @@ export default function Home() {
               to="/portfolio"
               className="text-neutral-500 hover:text-white hover:underline"
             >
-              portfolio
+              lab
             </Link>
+            <a
+              target="_blank"
+              href="https://hwasani.com/feed.rss"
+              className="text-neutral-500 hover:text-white hover:underline"
+              rel="noreferrer"
+            >
+              rss
+            </a>
           </div>
 
           <ul className="space-y-1 list-disc list-inside">

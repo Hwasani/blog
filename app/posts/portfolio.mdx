@@ -2,7 +2,7 @@
 slug: portfolio
 date: June 7 2026
 author: hwasani
-name: "Portfolio"
+name: "Lab"
 excerpt: "A look at the network and compute cluster running my homelab."
 keywords: portfolio,homelab,network,cluster
 hidden: true
@@ -14,8 +14,30 @@ hidden: true
 
 *Click the diagram to zoom in — the labels are too dense to read at column width.*
 
+Can't have a virtualization cluster without a network!
+
+One of the themes with my homelab is resourcefulness. I am not one to spend so much resources on aquiring upgrades or new computers, I try to work with what I have and make the most out of it.
+
+I have a NanoPi R5S as my router, running OpenWRT. It serves me well, even if I wish I had a x86 firewall for pfsense or opnsense. Maybe one day.
+
+A Cisco Business 220 switch. It has a non-standard Cisco CLI which is a little frustrating, but this was gifted to me so I cannot complain much. WebGUI configuration is actually better than the CLI, in my experience.
+
+Some TPLINK Deco Mesh satellites. This was probably the most expensive piece of equipment in my entire stack. It was a requirement because of the layout of where I live. It works well enough, doesn't do everything I'd like it to do.
+
+TPLink 8-Port managed switch. It's nothing special. Has a really weird configuration interface. It's almost a puzzle just to tag a VLAN on this switch.
+
+Everything is gigabit. I'd like to get multi-gig speeds internally some day, maybe when I have more resources to expand on my lab.
+
 ## Compute cluster
 
 <ZoomImage src="/cluster.svg" alt="Full diagram of my Proxmox cluster, with guest machines labeled and mapped out." />
 
 *Click the diagram to zoom in — the labels are too dense to read at column width.*
+
+This is my pride and joy! Kind of.
+
+I have a ThinkPad laptop as PVE1, and 3 HP EliteDesk SF G3 PCs as HV2, HV3, HV4. They all have some SSD storage and 1 has a GPU for transcoding.
+
+These are all pretty much useless machines for other purposes. I think if I booted Windows on any one of these machines that it would perform pretty bad.
+
+I'm currently playing with Ceph, I want to connect it to Cloudflare and play around with their CF One mesh so that workers can access my RGW bucket. I might do a write up on that soon.
