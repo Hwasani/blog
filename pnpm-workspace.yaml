@@ -5,4 +5,7 @@ allowBuilds:
   workerd: true
 
 packages:
- - .
+  - .
+
+patchedDependencies:
+  const-module: patches/const-module.patch

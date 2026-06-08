@@ -13,23 +13,23 @@ import "./app.css";
 
 export const meta: Route.MetaFunction = () => [
   {
-    title: "nullpt.rs • blog"
+    title: "hwasani.com • blog"
   },
   {
     name: "title",
-    content: "nullpt.rs • blog",
+    content: "hwasani.com • blog",
   },
   {
     name: "description",
-    content: "A collaborative technical blog",
+    content: "A technical blog",
   },
   {
     name: "og:title",
-    content: "nullpt.rs • blog",
+    content: "hwasani.com • blog",
   },
   {
     name: "og:description",
-    content: "A collaborative technical blog",
+    content: "A technical blog",
   },
   {
     name: "og:image",
@@ -37,7 +37,7 @@ export const meta: Route.MetaFunction = () => [
   },
   {
     name: "og:url",
-    content: "https://nullpt.rs",
+    content: "https://hwasani.com",
   },
 ];
 

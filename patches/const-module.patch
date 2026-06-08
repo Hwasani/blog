@@ -1,0 +1,24 @@
+diff --git a/dist/entry.js b/dist/entry.js
+index 4fa66b5b37ca48bbc3291775005433d6e54648a7..7ea716175c9f678e799c60b989a980560a23bc75 100644
+--- a/dist/entry.js
++++ b/dist/entry.js
+@@ -14,7 +14,18 @@ async function main() {
+         const mod = await import(absoluteModulePath);
+         const convertedModule = convertToSerializableTypes({ ...mod });
+         const serializedModule = JSON.stringify(convertedModule);
+-        console.log(serializedModule);
++        // `console.log` hands the write off asynchronously when stdout is a pipe
++        // (e.g. in CI on Linux). If the process exits before the write is flushed,
++        // the parent reads truncated/empty output and `JSON.parse` blows up with
++        // "Unexpected end of JSON input". Wait for the write to finish first.
++        await new Promise((resolve, reject) => {
++            process.stdout.write(`${serializedModule}\n`, (error) => {
++                if (error)
++                    reject(error);
++                else
++                    resolve();
++            });
++        });
+     }
+     catch (error) {
+         console.error(error);
