@@ -35,18 +35,17 @@ export const HackerHeading: React.FC<TextEncryptedProps> = ({ text, interval = 5
 	const remainder =
 		outputText.length < text.length
 			? text
-					.slice(outputText.length)
-					.split('')
-					.map(() => chars[Math.floor(Math.random() * chars.length)])
-					.join('')
+				.slice(outputText.length)
+				.split('')
+				.map(() => chars[Math.floor(Math.random() * chars.length)])
+				.join('')
 			: '';
 
 	if (!isMounted) {
 		return (
 			<div
-				className={`${
-					text.length >= 50 ? 'h-[48px]' : 'h-auto'
-				} sm:h-auto text-white font-mono overflow-clip`}
+				className={`${text.length >= 50 ? 'h-[48px]' : 'h-auto'
+					} sm:h-auto text-white font-mono overflow-clip`}
 			>
 				<span>{text}</span>
 			</div>

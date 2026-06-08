@@ -18,7 +18,7 @@ I was able to get permission to take these decommissioned "trash" machines home.
 
 ![An old desktop computer in the messy backseat of my car.](/posts/storage-disaster-recovery/old-win10-desktop.png)
 
-## First time setup
+## Initial setup
 
 I know I said I had no experience with virtualization, and that is true. But I had a lot of experience with running Linux as my main driver for my laptop. I switched to a M1 not that long after, but Mac being Unix based meant that I was really using a lot of the same packages that I used on linux.
 But I knew that just running linux baremetal was like anti-conducive to learning in my situation, so I looked up what hypervisors people were using for homelabs. 
@@ -38,7 +38,7 @@ I setup a hypervisor and deployed a VM, why did I feel so defeated? Oh well, I b
 My partner and I had gotten into anime, specifically Attack On Titan, around that time. A friend of ours had invited us to their Plex, but it was so hard to watch with how slow their upload speed was, it buffered a lot and wasn't always accessible. Pretty miserable experience, but hey we got to watch a show that we couldn't normally watch.
 In hindsight, I'm pretty sure this is everyone's first project, but I was very excited about it. 
 
-## The actual setup
+## Upgrades, expansion, and deployment
 
 I got Jellyfin running natively on a debian VM, but I could really only hold a couple seasons of whatever shows that I wanted to watch, the host machine at this time was just an old enterprise desktop with a 128GB SATA SSD in it, I really had to make the most of what resources I had.
 I was able to finish out Attack On Titan with this setup, also the video encoding performance was pretty bad, the processor did NOT support intel Quicksync. Slow encode and fast but small capacity storage got the job but we had to pace how much we watched in our sessions.
@@ -66,7 +66,7 @@ I pretty much hit a renaissance at this point, my media server was working, I ha
 I was very happy with it.
 
 
-## Uh oh....
+## Early warnings
 
 You might've noticed it, but I mentioned that I only bought 1 14TB HDD. I purchased it thinking "Eh, I can always upgrade later. This is just for now."
 
@@ -84,7 +84,7 @@ I'm sure you're beginning to see where I'm going with this. My 14TB HC530 drive,
 
 Just my luck.
 
-## Incident Response
+### Incident Response
 
 I started moving as much as I could off of the NAS and put it on my PC instead, doing this I was able to free up about 4TB of data from the HC530.
 
@@ -96,7 +96,7 @@ I spun up another instance of TrueNAS on a different PVE with smaller storage an
 
 But I was back to square one effectively, back to when I first setup my Jellyfin server. Rotating shows off and on was tedious and frustrating; I was beginning to feel like I was babysitting my entertainment with quotas on how much I watched each week to make space for a show that we wanted to watch instead of whatever was on there at the time.
 
-## Band-aids
+### Band-aids
 
 I was able to take another decommissioned machine from work and added it to my cluster. At this point, we've got quite a few SSDs across the cluster, and the only way I knew how to get that storage onto my network at the time, was with TrueNAS. (I was really not ambitious looking back at this.)
 
@@ -108,7 +108,7 @@ I used it normally and kind of forgot about my problems, we weren't watching as 
 
 We started noticing that the streams would stop playing abruptly on Infuse. I just kept blaming the client because the website was accessible, and I was able to access media off it. Not understanding that this was foreshadowing.
 
-## Event #2
+### Irreversible failure
 
 At some point, I was carelessly starting to load more data onto the dataset on the HC530. 
 
@@ -181,7 +181,7 @@ The catch is real SANs are expensive with things like dedicated fiber, specializ
 
 We'd recently set it up on our cluster at work, and it got me wondering if Proxmox had something similar. And it does.
 
-## Ceph
+### Ceph
 
 Ceph is an open-source Unified Software-Defined Storage platform, what this means is that it's feature rich, allowing for things like S3-buckets, it has a shared FS solution called CephFS, data replication, and it has block-level storage capabilities. Ceph takes the idea of cluster your compute nodes, and translates it into clustering your storage nodes.
 
@@ -201,10 +201,8 @@ After I got that sorted out and rebuilt permissions, I loaded media onto the new
 
 So, was it worth it? Yeah. I went from a single drive that could take down my entire stack when it died, to storage spread across the whole cluster. More than that, I understand my own infrastructure way better than I did before any of this broke. Turns out that sometimes a catastrophic failure and total data loss is the exact right time to learn something new.
 
-## Thanks for reading!
 
-This is my first writeup that I've ever done like this, so any feedback, criticism, or otherwise would be greatly appreciated.
+## Credit
 
-# Credit
 
 Thanks to [voidstar0](https://github.com/voidstar0), who is the creator of this blog template, for suggesting that I create my own blog. I didn't appreciate how well they write their posts until I tried to write my own lol.

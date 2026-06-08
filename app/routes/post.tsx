@@ -99,15 +99,10 @@ const MDX_COMPONENTS = {
   ),
   WebGLFingerprint: lazy(() => import('~/components/webgl_fingerprint')),
   OldPost: lazy(() => import('~/components/old_post')),
+  ZoomImage: lazy(() => import('~/components/zoom_image')),
   img: (props: any) => (
     <figure className="flex flex-col items-center">
-      <img
-        {...props}
-        layout="responsive"
-        loading="lazy"
-        width={100}
-        height={100}
-      />
+      <img {...props} loading="lazy" />
       <figcaption>{props.alt}</figcaption>
     </figure>
   ),

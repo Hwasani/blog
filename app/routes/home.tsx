@@ -50,6 +50,20 @@ export default function Home() {
             >
               rss
             </a>
+            <a
+              target="_blank"
+              href="https://www.linkedin.com/in/aaron-zev-maldonado/"
+              className="text-neutral-500 hover:text-white hover:underline"
+              rel="noreferrer"
+            >
+              linkedin
+            </a>
+            <Link
+              to="/portfolio"
+              className="text-neutral-500 hover:text-white hover:underline"
+            >
+              portfolio
+            </Link>
           </div>
 
           <ul className="space-y-1 list-disc list-inside">

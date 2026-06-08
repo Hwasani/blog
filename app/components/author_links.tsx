@@ -46,6 +46,7 @@ const authorData: Record<string, AuthorInfo> = {
 		contacts: {
 			twitter: 'https://twitter.com/hwasan111',
 			github: 'https://github.com/hwasani',
+			linkedin: 'https://www.linkedin.com/in/aaron-zev-maldonado/',
 		},
 		profilePicture: 'https://avatars.githubusercontent.com/u/113956264?v=4',
 	},
