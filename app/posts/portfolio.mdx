@@ -28,7 +28,7 @@ TPLink 8-Port managed switch. It's nothing special. Has a really weird configura
 
 Everything is gigabit. I'd like to get multi-gig speeds internally some day, maybe when I have more resources to expand on my lab.
 
-## Compute cluster
+## Virtual Environment
 
 <ZoomImage src="/cluster.svg" alt="Full diagram of my Proxmox cluster, with guest machines labeled and mapped out." />
 
@@ -36,8 +36,11 @@ Everything is gigabit. I'd like to get multi-gig speeds internally some day, may
 
 This is my pride and joy! Kind of.
 
-I have a ThinkPad laptop as PVE1, and 3 HP EliteDesk SF G3 PCs as HV2, HV3, HV4. They all have some SSD storage and 1 has a GPU for transcoding.
+I have a ThinkPad laptop as PVE1, and 3 HP EliteDesk SF G3 PCs as PVE2, PVE3, and PVE4. They all have some SSD storage and 1 has a GPU for transcoding.
 
 These are all pretty much useless machines for other purposes. I think if I booted Windows on any one of these machines that it would perform pretty bad.
 
-I'm currently playing with Ceph, I want to connect it to Cloudflare and play around with their CF One mesh so that workers can access my RGW bucket. I might do a write up on that soon.
+I've recently implemented Semaphore, Gitea, Ansible, and Terraform into my environment. I've used IaC at work, but building it front to back at home was pretty cool. I'm currently using it to provision VMs in the cluster, then applying baseline configurations using Ansible jobs.
+You lose a lot with Semaphore instead of AWX, but it works just fine in this small cluster. 
+
+I'm currently playing with Ceph, I wrote a [blog post](/storage-disaster-recovery) about what made me switch to clustered storage over local storage. I want to connect it to Cloudflare and play around with their CF One mesh so that workers can access my RGW bucket. I might do a write up on that soon.
