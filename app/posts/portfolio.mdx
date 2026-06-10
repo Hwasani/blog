@@ -8,21 +8,19 @@ keywords: portfolio,homelab,network,cluster
 hidden: true
 ---
 
-This is the infrastructure I learn on. Four Proxmox nodes built from decommissioned
-HP EliteDesk SFF machines and a ThinkPad, a gigabit network with real VLAN
-segmentation, and an automation layer that means I stopped clicking through UIs
-to provision things. None of it is glamorous. That's the point.
+I think a good indicator of skill, passion, or ambition, for any engineer, is how well you lab and test things at home. I eventually want to turn this into a portfolio, but I have to start somewhere.
+That being said, here's what I have in my lab! To start with an inventory, I've got an old ThinkPad and 3 old HP EliteDesk G3 SFF PCs as PVE nodes.
+Newer stuff is better, yeah, but it works just fine in my lab environment for testing and learning. I have a real segmented network with VLANs, WiFi being an untrusted DHCP network with restrictions and controls applied to it, and an automation workflow so I can quickly provision and configure new guest machines.
 
 ## Network
 
-The edge is a NanoPi R5S running OpenWRT — cheap, fanless, and more than capable
-of routing a home network. A Cisco Business 220 is the core switch; a small
-TP-Link managed switch handles the cabling where things get awkward. Wireless is
-a TP-Link Deco mesh with the main node wired back to the Cisco.
+The edge is a NanoPi R5S running OpenWRT, relatively cheap, small, and works well enough. A Cisco Business 220 is what you might consider a collapsed core, even if that's a bit.... ambitious. 
 
-The network is still all gigabit. I'm not in a hurry to upgrade — the current goal
-is clean segmentation and enough visibility to understand what broke before blaming
-the wrong layer.
+A small TP-Link 8-port managed switch for the rest of my PVE nodes.
+
+Wireless is a TP-Link Deco mesh with the main satellite node hooked into the Cisco switch.
+
+The network is only gigabit, I'd love to get a faster backbone, even if I can't get a multi-gig upstream. The goal with my network was clean segmentation and reliability.
 
 <ZoomImage
   src="/network.svg"
@@ -33,13 +31,11 @@ the wrong layer.
 
 ## Cluster
 
-PVE1 is the ThinkPad; PVE2 through PVE4 are the EliteDesk machines. One of them
-carries a Quadro P400 that handles Jellyfin transcoding. DNS is a three-hop
-chain: AdGuard takes all queries first and drops denylisted domains, Technitium
-handles the authoritative internal zone (lan.hwasani.com), and anything not in
-that zone goes to Unbound for recursive resolution. Nginx Proxy Manager
-terminates TLS for internal services. Headscale handles remote access to the
-Proxmox management interface.
+PVE1 is the ThinkPad, PVE2-4 are the HP EliteDesk machines. PVE2 carries a Quadro P400 that handles Jellyfin transcoding. 
+DNS is a three-hop chain with AdGuard taking all queries first and drops any requests intended for denylisted domains, Technitium handles the authoritative internal zone (lan.hwasani.com), and anything not in that zone goes to Unbound for recursive resolution.
+I understand it's complete overkill, but I set it up once to test which one I liked the most, and I liked the workflow of all 3.... so I kept it.
+
+Nginx Proxy Manager provides TLS certificates for my internal services using a DNS-01 challenge with Let's Encrypt to my domain in Cloudflare. Headscale handles secure remote access to the Proxmox management interface, though I might integrate Cloudflare One in my lab. Not sure yet.
 
 <ZoomImage
   src="/cluster.svg"
@@ -50,12 +46,10 @@ Proxmox management interface.
 
 ## Automation and Storage
 
-Gitea holds the configuration. Terraform provisions VMs against the Proxmox API.
-Semaphore runs the Ansible jobs. Baseline config lands without touching every
-system by hand, which is mostly the point — the lab should feel like engineering
-practice, not a pile of machines I SSH into individually.
+Gitea holds the configuration, Semaphore runs the Ansible jobs, Terraform provisions VMs against the cluster using an API, and baseline configurations are applied using the Ansible runner. This setup has made my cluster feel more like a real production environment rather than an amateur homelab.
 
-Storage is Ceph after I moved away from local-only. I wrote about that migration
-and the failure that forced it in the [storage disaster recovery post](/storage-disaster-recovery).
-Next thing I want to try is connecting the RGW bucket to Cloudflare and testing
-how CF One mesh patterns can expose object storage to Workers.
+
+My storage is done using the Ceph cluster, moving on from a disk drive to multiple SSDs across my cluster. I wrote about that migration and the failure that caused it in my [storage disaster recovery post](/storage-disaster-recovery).
+While I get way less storage, my storage is much faster now, and it's all SSD. Less headache for me in the long run, but I'll probably reintegrate spinning disk drives in the future for media. The speed is kind of wasted on the media server stuff.
+
+I have a few things I want to do in my lab. Whether it's connecting an RGW bucket to the cloud using a Cloudflare tunnel, or maybe connecting it to an AWS instance. Just curious about what it can actually do and how viable it is.
