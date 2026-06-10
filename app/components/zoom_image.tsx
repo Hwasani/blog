@@ -44,13 +44,6 @@ export function ZoomImage({ src, alt, label, caption }: ZoomImageProps) {
           aria-modal="true"
           aria-label={alt}
         >
-          <button
-            type="button"
-            className="fixed right-4 top-4 z-[60] border border-neutral-700 bg-black px-3 py-2 font-mono text-xs uppercase tracking-[0.18em] text-neutral-200 transition-colors hover:border-green-500 hover:text-green-300"
-            onClick={() => setOpen(false)}
-          >
-            close
-          </button>
           <img
             src={src}
             alt={alt}
