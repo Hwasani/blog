@@ -8,39 +8,54 @@ keywords: portfolio,homelab,network,cluster
 hidden: true
 ---
 
+This is the infrastructure I learn on. Four Proxmox nodes built from decommissioned
+HP EliteDesk SFF machines and a ThinkPad, a gigabit network with real VLAN
+segmentation, and an automation layer that means I stopped clicking through UIs
+to provision things. None of it is glamorous. That's the point.
+
 ## Network
 
-<ZoomImage src="/network.svg" alt="Full diagram of my network, including VLANs, Mesh nodes, Switches, Router, and Compute nodes." />
+The edge is a NanoPi R5S running OpenWRT — cheap, fanless, and more than capable
+of routing a home network. A Cisco Business 220 is the core switch; a small
+TP-Link managed switch handles the cabling where things get awkward. Wireless is
+a TP-Link Deco mesh with the main node wired back to the Cisco.
 
-*Click the diagram to zoom in — the labels are too dense to read at column width.*
+The network is still all gigabit. I'm not in a hurry to upgrade — the current goal
+is clean segmentation and enough visibility to understand what broke before blaming
+the wrong layer.
 
-Can't have a virtualization cluster without a network!
+<ZoomImage
+  src="/network.svg"
+  label="NETWORK MAP"
+  alt="Full diagram of my network, including VLANs, mesh nodes, switches, router, and compute nodes."
+  caption="Network topology — VLANs, mesh backhaul, switching, and Proxmox hosts."
+/>
 
-One of the themes with my homelab is resourcefulness. I am not one to spend so much resources on aquiring upgrades or new computers, I try to work with what I have and make the most out of it.
+## Cluster
 
-I have a NanoPi R5S as my router, running OpenWRT. It serves me well, even if I wish I had a x86 firewall for pfsense or opnsense. Maybe one day.
+PVE1 is the ThinkPad; PVE2 through PVE4 are the EliteDesk machines. One of them
+carries a Quadro P400 that handles Jellyfin transcoding. DNS is a three-hop
+chain: AdGuard takes all queries first and drops denylisted domains, Technitium
+handles the authoritative internal zone (lan.hwasani.com), and anything not in
+that zone goes to Unbound for recursive resolution. Nginx Proxy Manager
+terminates TLS for internal services. Headscale handles remote access to the
+Proxmox management interface.
 
-A Cisco Business 220 switch. It has a non-standard Cisco CLI which is a little frustrating, but this was gifted to me so I cannot complain much. WebGUI configuration is actually better than the CLI, in my experience.
+<ZoomImage
+  src="/cluster.svg"
+  label="CLUSTER MAP"
+  alt="Full diagram of my Proxmox cluster, with guest machines labeled and mapped out."
+  caption="Proxmox cluster layout — hosts, guests, storage relationships, and the DNS and automation planes."
+/>
 
-Some TPLINK Deco Mesh satellites. This was probably the most expensive piece of equipment in my entire stack. It was a requirement because of the layout of where I live. It works well enough, doesn't do everything I'd like it to do.
+## Automation and Storage
 
-TPLink 8-Port managed switch. It's nothing special. Has a really weird configuration interface. It's almost a puzzle just to tag a VLAN on this switch.
+Gitea holds the configuration. Terraform provisions VMs against the Proxmox API.
+Semaphore runs the Ansible jobs. Baseline config lands without touching every
+system by hand, which is mostly the point — the lab should feel like engineering
+practice, not a pile of machines I SSH into individually.
 
-Everything is gigabit. I'd like to get multi-gig speeds internally some day, maybe when I have more resources to expand on my lab.
-
-## Virtual Environment
-
-<ZoomImage src="/cluster.svg" alt="Full diagram of my Proxmox cluster, with guest machines labeled and mapped out." />
-
-*Click the diagram to zoom in — the labels are too dense to read at column width.*
-
-This is my pride and joy! Kind of.
-
-I have a ThinkPad laptop as PVE1, and 3 HP EliteDesk SF G3 PCs as PVE2, PVE3, and PVE4. They all have some SSD storage and 1 has a GPU for transcoding.
-
-These are all pretty much useless machines for other purposes. I think if I booted Windows on any one of these machines that it would perform pretty bad.
-
-I've recently implemented Semaphore, Gitea, Ansible, and Terraform into my environment. I've used IaC at work, but building it front to back at home was pretty cool. I'm currently using it to provision VMs in the cluster, then applying baseline configurations using Ansible jobs.
-You lose a lot with Semaphore instead of AWX, but it works just fine in this small cluster. 
-
-I'm currently playing with Ceph, I wrote a [blog post](/storage-disaster-recovery) about what made me switch to clustered storage over local storage. I want to connect it to Cloudflare and play around with their CF One mesh so that workers can access my RGW bucket. I might do a write up on that soon.
+Storage is Ceph after I moved away from local-only. I wrote about that migration
+and the failure that forced it in the [storage disaster recovery post](/storage-disaster-recovery).
+Next thing I want to try is connecting the RGW bucket to Cloudflare and testing
+how CF One mesh patterns can expose object storage to Workers.
