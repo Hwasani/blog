@@ -93,7 +93,7 @@ Next thing to touch is IAM. This is really familiar to me, coming from a Microso
 
 I gave it a funny but also accurate name. The only policy these guys are getting is s3:PutObject, and we restrict it to a specific ARN or Amazon Resource Name. It's best to always follow least privilege identity design principles, especially so in a kind of "public" lab like AWS.
 
-![IAM group with an attached inline policy granting s3:PutObject scoped to the backup bucket ARN](/posts/labbing-with-aws/bucket-putter-group.png)
+![IAM group with the backup-runner policy (with s3:PutObject) scoped to the backup bucket ARN](/posts/labbing-with-aws/bucket-putter-group.png)
 
 Now we move onto the user.
 
