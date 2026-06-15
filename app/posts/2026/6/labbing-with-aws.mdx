@@ -1,0 +1,285 @@
+---
+slug: labbing-with-aws
+date: June 15 2026
+author: hwasani
+name: "So I started labbing with AWS"
+excerpt: "Starting from scratch with AWS: building an automated S3 backup system with Lambda event triggers, SNS email alerts, and least-privilege IAM — all as a first real cloud project."
+keywords: cloud,cloud-engineering,homelab,practice
+---
+
+
+
+
+
+## Ideas
+
+Recently I've started to take myself a bit seriously again. I'm studying everyday at work, I'm pushing myself to learn new technologies or workflows, while trying to strengthen what I already know. I want to prove to myself that I'm just as good as the next guy, but I also want to separate myself at the same time.
+
+I've been doing some research for a new project, and my good friend suggested that I add AWS to my skillset. I've done maybe 20 hours of AWS certification coursework in the past, and I've never built anything other than an EC2 with amazon linux to run a minecraft server back in 2021.
+
+So, I've had to research some project ideas that would familiarize myself with AWS, its foundational products, and how they all integrate with one another.
+
+I've come up with one or two interesting concepts, but neither really seem so interesting for me to try and plan and complete. 
+
+First, my friend and I thought about utilizing some tools that might be interesting, like building an API that stores secrets in the secrets manager, and somehow integrating that in the cloud.
+
+Another was like building a fully AWS hosted website, but that seemed kind of lame after a few minutes.
+
+But something else came across my mind, because it's relevant in my current job. What about AWS hosted backups?
+
+This is probably not at ALL a new idea, companies have probably been doing cloud data backups for relational databases for years at this point. But.... honestly isn't that more of a reason to build something like this in AWS?
+
+Sold! In this blog post, we're going to be building an automated backup system fully in the cloud, with Lambdas, S3 buckets, and email alerts!
+
+###  Planning
+
+I began researching what the scope for a project like this might look like. I pretty much immediately ran into one of the core principles of AWS: infinite scalability. I mean think about it, I'm coming from a homelab where I have hand-me-down machines running on 8+ year old hardware.
+
+It became immediately apparent that I needed to plan this entire project out before I touched anything. I understood that the infinitely scaling resource pools also meant that any project, both prod and dev, also had infinite scope. Exciting, sure, but you have to be kind of responsible and purposeful with AWS.
+
+Anyways, the architecture will look as follows: I'll create an S3 bucket that is only available to users and objects within my AWS tenant with a 30 day object lifecycle, I'll need a Lambda to trigger when an object is put into the bucket, and an SNS node to email me the status of the event, whether it was successful or not.
+
+Sounds easy enough! I mean, I handle an actual production M365 environment at work including things like Intune, Entra, Exchange, and Defender. Can't be that hard. Let's get started.
+
+## Implementation
+
+![AWS Management Console home page showing the main dashboard](/posts/labbing-with-aws/aws-console.png)
+
+I had played around with EC2s in the past, I've mentioned that before, so I'm a little familiar with AWS. Lets start with an S3 bucket.
+
+![AWS services overview listing all available product categories](/posts/labbing-with-aws/all-services.png)
+
+Wow. I already feel overwhelmed! Anyways, S3 bucket configuration.
+
+![S3 bucket creation form with general purpose type and default settings selected](/posts/labbing-with-aws/s3-bucket-menu.png)
+
+For this project, I'm just going to be using a fairly default configuration for this bucket. General purpose bucket type, regional bucket name, no ACLs, versioning enabled, a tag of my project name, SSE-S3 encryption, and object locking.
+
+Okay, that's a lot of stuff in one line, even if they're like standard options. 
+
+### ACLs, Object locking, Versioning, and encryption.
+
+The language about having no ACLs makes it sound publicly accessible and open to the internet, but that's not the case. It's actually the opposite. Let's liken this setting to a Python if statement.
+
+```python
+public = False
+
+if public:
+    # allow access
+    pass
+```
+
+Makes sense now right? If your S3 bucket is private, why would you need ACLs to control access to it? So skip it entirely. If it's public, we apply controls. Simple as.
+
+Any good backup system needs versioning. I don't want backups of just what was on my dataset only the last time I ran it, I want backups from 5, 10, 30 days prior, so we enable this.
+
+SSE-S3 encryption is standard symmetric key encryption (AES-256), that's really not special.
+
+Object locking is interesting. While for my purposes it's actually kind of annoying, what it does is lock down new data put into the bucket for X amount of time. So this could be 1 day, 30 days, 180 days, etc. It follows a concept called WORM or write once, read many. I'm turning it on to say I used it.
+
+![S3 object lock configuration showing governance mode with a 7-day retention period](/posts/labbing-with-aws/s3-object-lock.png)
+
+Next I'm going to make use of object locking set retention from infinite to 7 days with governance mode, which just means I can come in here with an elevated account and clear the bucket out.
+
+![S3 lifecycle management rule configured to expire objects after 30 days](/posts/labbing-with-aws/data-lifecycle.png)
+
+And then I'll setup lifecycle management here. I never explained the reasoning for this setting, but the idea is that you want backups, though you don't necessarily want infinite backups. If these were like virtual machine backups, you'd be spending a lot of money maintaining these buckets. So lifecycle helps manage that.
+
+### Identity and access
+
+Next thing to touch is IAM. This is really familiar to me, coming from a Microsoft environment where I'm actively managing identity and security groups. Here I'll create a user and a group to assign privileges to. 
+
+![IAM user group creation form in the AWS console](/posts/labbing-with-aws/iam-new.png)
+
+I gave it a funny but also accurate name. The only policy these guys are getting is s3:PutObject, and we restrict it to a specific ARN or Amazon Resource Name. It's best to always follow least privilege identity design principles, especially so in a kind of "public" lab like AWS.
+
+![IAM group with an attached inline policy granting s3:PutObject scoped to the backup bucket ARN](/posts/labbing-with-aws/bucket-putter-group.png)
+
+Now we move onto the user.
+
+![IAM user review screen for runner00 before creation](/posts/labbing-with-aws/runner00.png)
+
+Not much to do here. Straightforward settings. So far so good. This is kind of looking like a tutorial at this point!
+
+Onto the email alerting part of this project.
+
+### Email notifications/SNS
+
+We open up the SNS product page and create a new topic.
+
+![SNS topic creation form with standard type selected](/posts/labbing-with-aws/sns-topic.png)
+
+Very standard, the actual email part is next.
+
+![SNS subscription configuration with email protocol and endpoint set](/posts/labbing-with-aws/subscription.png)
+
+Here we're going to create a subscription, set the Topic ARN to our SNS topic, set the protocol to email, and then add my email endpoint.
+
+#### Lambda and some Python
+
+Now we need a Lambda to execute a Python script everytime we get a new object in our S3 bucket.
+
+(Their little code editor comes with a tester to send test data to your Lambda, this was very useful for writing the actual script)
+
+Let's talk about some of the logic for the script. 
+
+We have to use AWS' boto3 module to interact with AWS resources. I'm going to be using the [SNS client](https://docs.aws.amazon.com/boto3/latest/reference/services/sns.html).
+
+
+```Python
+import boto3
+
+client = boto3.client('sns')
+ARN = 'arn:aws:sns:us-east-1:123456789012:backup-alerts'
+
+
+def lambda_handler(event, context): #default AWS function to execute lambda
+    # TODO implement
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Hello from Lambda!')
+    }
+
+```
+
+![Lambda inline code editor showing the Python function alongside the built-in test event panel](/posts/labbing-with-aws/lambda-code-editor.png)
+
+And their built in event tester is pretty neat and useful. I get to see exactly what kind of data the event arg will receive.
+
+
+```json
+{
+  "Records": [
+    {
+      "eventVersion": "2.0",
+      "eventSource": "aws:s3",
+      "awsRegion": "us-east-1",
+      "eventTime": "1970-01-01T00:00:00.000Z",
+      "eventName": "ObjectCreated:Put",
+      "userIdentity": {
+        "principalId": "EXAMPLE"
+      },
+      "requestParameters": {
+        "sourceIPAddress": "127.0.0.1"
+      },
+      "responseElements": {
+        "x-amz-request-id": "EXAMPLE123456789",
+        "x-amz-id-2": "EXAMPLE123/5678abcdefghijklambdaisawesome/mnopqrstuvwxyzABCDEFGH"
+      },
+      "s3": {
+        "s3SchemaVersion": "1.0",
+        "configurationId": "testConfigRule",
+        "bucket": {
+          "name": "example-bucket",
+          "ownerIdentity": {
+            "principalId": "EXAMPLE"
+          },
+          "arn": "arn:aws:s3:::example-bucket"
+        },
+        "object": {
+          "key": "test%2Fkey",
+          "size": 1024,
+          "eTag": "0123456789abcdef0123456789abcdef",
+          "sequencer": "0A1B2C3D4E5F678901"
+        }
+      }
+    }
+  ]
+}
+```
+Everything we need from this json is under the s3 object. We'll take the bucket name, key, and size. We'll create a for loop just in case we get multiple records at once.
+
+```Python
+def lambda_handler(event, context):
+    for record in event['Records']:
+        bucket = record['s3']['bucket']['name']
+        key = record['s3']['object']['key']
+        size = record['s3']['object']['size']
+```
+
+Then we use the sns client method called publish. There's a few things you can do with this method, but we're going to be using only what's required.
+
+```Python
+client.publish(
+    TopicArn=ARN,
+    Message='Backup of file ' + key + ' from bucket ' + bucket + ' has been created. Size:' + str(size),
+    Subject='New Backup Created'
+)
+```
+
+Altogether, this is how our code looks.
+
+```Python
+import boto3
+
+client = boto3.client('sns');
+ARN = 'arn:aws:sns:us-east-1:123456789012:backup-alerts' 
+
+
+def lambda_handler(event, context):
+    for record in event['Records']:
+        bucket = record['s3']['bucket']['name']
+        key = record['s3']['object']['key']
+        size = record['s3']['object']['size']
+
+        client.publish(
+            TopicArn=ARN,
+            Message='Backup of file ' + key + ' from bucket ' + bucket + ' has been created. Size:' + str(size),
+            Subject='New Backup Created'
+        )
+    return{"sent ": len(event.get("Records", []))}
+```
+
+Now lets run a test!
+
+```json
+{
+  "errorMessage": "An error occurred (AuthorizationError) when calling the Publish operation: User: arn:aws:sts::123456789012:assumed-role/backup-notify-role-hpdjiysn/backup-notify is not authorized to perform: SNS:Publish on resource: arn:aws:sns:us-east-1:123456789012:backup-alerts because no identity-based policy allows the SNS:Publish action",
+  "errorType": "AuthorizationErrorException",
+  "requestId": "5a7bad45-782c-4112-b80f-3e8bd5017a69",
+  "stackTrace": [
+    "  File \"/var/task/lambda_function.py\", line 13, in lambda_handler\n    client.publish(\n",
+    "  File \"/var/lang/lib/python3.14/site-packages/botocore/client.py\", line 606, in _api_call\n    return self._make_api_call(operation_name, kwargs)\n",
+    "  File \"/var/lang/lib/python3.14/site-packages/botocore/context.py\", line 123, in wrapper\n    return func(*args, **kwargs)\n",
+    "  File \"/var/lang/lib/python3.14/site-packages/botocore/client.py\", line 1094, in _make_api_call\n    raise error_class(parsed_response, operation_name)\n"
+  ]
+}
+```
+
+Ah, I forgot to setup permissions. 
+![Lambda test execution showing a successful invocation after adding the SNS publish permission](/posts/labbing-with-aws/successful-test.png)
+
+Alright, now that we have the code working in the Lambda, let's make sure that our S3 bucket can actually create event notifications.
+
+## Testing
+
+![S3 event notification configured to trigger the Lambda on ObjectCreated events](/posts/labbing-with-aws/console-upload.png)
+
+Let's test the entire notification process from front to back by uploading directly from the console.
+
+![screenshot of email confirming upload to S3 bucket](/posts/labbing-with-aws/console-test-email.png)
+
+And now we're finally done! I just need to give the runner00 user an access key to upload files to the s3 bucket from the AWS CLI. This is just to see if the user I created can actually use this workflow from front to back.
+
+I created an access key and configured it for my AWS CLI on my machine. For my purposes, this works just fine, but something like SSO is obviously preferred.
+
+Here's the command I'm going to run to test!
+
+```powershell
+C:\Users\hwasani>aws s3 cp ./whatsafather.png s3://aws-backup-project-123456789012-us-east-1-an
+
+upload: .\whatsafather.png to s3://aws-backup-project-123456789012-us-east-1-an/whatsafather.png
+```
+
+![Email notification confirming whatsafather.png was uploaded to S3 via the AWS CLI](/posts/labbing-with-aws/whatsafather.png)
+
+And there we go!
+
+Obviously, the only thing I ran with the CLI is just an upload of a single file into my S3 bucket, but the proof of concept is the actual process working and not the file upload part. Realistically, I would have something like a Proxmox node compressing backups into a tar.gz file, then syncing the directory to the S3 bucket.
+
+My testing shows that something like this WILL work, and that's good enough for me! Imagine you have multiple nodes running cronjobs to backup VMs every Saturday 0200. You'd have everything from notifications, extremely redundant backup storage, and autonomous backups all in a very very cheap AWS setup.
+
+
+# Conclusion
+
+This was more of just a proof of concept and an exercise in AWS, Cloud systems architecture, IAM, and with some lessons about building things in cloud. Overall, I'm very happy with this little weekend project, even if I feel like it's not too impressive.
