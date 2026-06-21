@@ -35,7 +35,7 @@ Let's take a look at some documentation for boto3 and look at the EC2 client. Wh
 
 Here's a snippet of how we can use this method.
 
-```python3
+```python
 client = boto3.client('ec2')
 response = client.describe_instances(
     InstanceIds=['string',], 
@@ -66,7 +66,7 @@ For this method, they do recommend the use of a paginator just because of how mu
 
 Using what we just found in the boto3 documentation, let's build a python script that would search for a specific tag called "production" with the value "false" across all of my EC2 instances.
 
-```python3
+```python
 import boto3
 
 client = boto3.client('ec2')
@@ -99,7 +99,7 @@ We implemented the paginator, and we're getting a list of instance IDs that have
 
 Now, we could leave it at that and just pass these to our hypothetical Sysadmin for them to review for deletion. But I think what's actually more useful is a return of the full JSON response. Let's build it.
 
-```python3
+```python
 import json
 import boto3
 
@@ -179,7 +179,7 @@ I've truncated the response since it's just so much data. But now we absolutely 
 
 Now, we could have this ran serverless with a Lambda and tie it to an SNS so we can get emails of the JSON response. Just need to adjust the code a bit to accomodate this change.
 
-```python3
+```python
 import json
 import boto3
 
