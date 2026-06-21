@@ -1,9 +1,9 @@
 ---
 slug: auditing-aws-resources
-date: June TBD 2026
+date: June 21 2026
 author: hwasani
-name: "Building a Python script to automatically audit AWS resources"
-excerpt: "Starting from scratch with AWS: building an automated S3 backup system with Lambda event triggers, SNS email alerts, and least-privilege IAM — all as a first real cloud project."
+name: "Building a Python script to automatically audit EC2 instances"
+excerpt: "Writing Python scripts using boto3 to audit decommissioned EC2 instances."
 keywords: cloud,cloud-engineering,homelab,practice,python,aws
 ---
 
@@ -21,7 +21,7 @@ That's scope creep.
 
 ## Idea
 
-After my project was built, I now have users, groups, an S3, SNS, a Lambda, basically all of these resources inside my console that are no longer needed. It made me think about if I were working at an enterprise that had hundreds if not thousands of cloud resources. How much old resources might I still have provisioned?
+After my project was built, I now have users, groups, an S3, SNS, a Lambda, basically all of these resources inside my console that are no longer needed. It made me think about if I were working at an enterprise that had hundreds if not thousands of cloud resources. How many old resources might I still have provisioned?
 
 Where I'm at now, it's not uncommon to find something that was left in place and mothballed as a "just in-case" measure, but because I'm newer I have no context for what these things are or their importance. We might not even have any documentation for whatever it is I might find.
 
@@ -35,7 +35,7 @@ Let's take a look at some documentation for boto3 and look at the EC2 client. Wh
 
 Here's a snippet of how we can use this method.
 
-```python
+```python3
 client = boto3.client('ec2')
 response = client.describe_instances(
     InstanceIds=['string',], 
@@ -62,14 +62,16 @@ The other stuff isn't too important.
 
 For this method, they do recommend the use of a paginator just because of how much data can potentially be pulled from AWS using this command. Let's follow their recommendation and also use their paginator.
 
-### Proof of concept
+### Implementation
 
 Using what we just found in the boto3 documentation, let's build a python script that would search for a specific tag called "production" with the value "false" across all of my EC2 instances.
 
-```python
-client = boto3.client('ec2')
+```python3
+import boto3
 
-response = client.describe_instances(
+client = boto3.client('ec2')
+paginator = client.get_paginator('describe_instances')
+page_iterator = paginator.paginate(
     Filters=[
         {
             'Name': 'tag:production',
@@ -77,8 +79,160 @@ response = client.describe_instances(
                 'false',
             ]
         }
-    ] 
+    ]
 )
 
-print(response)
+instances = []
+for page in page_iterator:
+    for reservation in page['Reservations']:
+        for instance in reservation['Instances']:
+            instances.append(instance['InstanceId'])
+
+print(instances)
 ```
+
+We implemented the paginator, and we're getting a list of instance IDs that have the production tag with a value of false.
+
+```
+['i-0fd9f3c6ab55584f8', 'i-0edc06e209de63c9c']
+```
+
+Now, we could leave it at that and just pass these to our hypothetical Sysadmin for them to review for deletion. But I think what's actually more useful is a return of the full JSON response. Let's build it.
+
+```python3
+import json
+import boto3
+
+client = boto3.client('ec2')
+paginator = client.get_paginator('describe_instances')
+page_iterator = paginator.paginate(
+    Filters=[
+        {
+            'Name': 'tag:production',
+            'Values': [
+                'false',
+            ]
+        }
+    ]
+)
+
+instances = []
+for page in page_iterator:
+    for reservation in page['Reservations']:
+        for instance in reservation['Instances']:
+            instances.append(instance)
+
+with open('instances.json', 'w') as f:
+    json.dump(instances, f, indent=2, default=str)
+```
+
+Let's take a look at one of the key entries it made in the instances.json file.
+
+```json
+[
+  {
+    "Architecture": "x86_64",
+    "BlockDeviceMappings": [
+      {
+        "DeviceName": "/dev/sda1",
+        "Ebs": {
+          "AttachTime": "2026-06-16 05:15:55+00:00",
+          "DeleteOnTermination": true,
+          "Status": "attached",
+          "VolumeId": "vol-0654e4408626f3595"
+        }
+      }
+    ],
+    // ...
+    "InstanceId": "i-0fd9f3c6ab55584f8",
+    "ImageId": "ami-0b12a86a613a04fc6",
+    "State": {
+      "Code": 16,
+      "Name": "running"
+    }
+  },
+  {
+    "Architecture": "x86_64",
+    "BlockDeviceMappings": [
+      {
+        "DeviceName": "/dev/sda1",
+        "Ebs": {
+          "AttachTime": "2026-06-16 05:15:55+00:00",
+          "DeleteOnTermination": true,
+          "Status": "attached",
+          "VolumeId": "vol-02e0883fcb0d9c243"
+        }
+      }
+    ],
+    // ...
+    "InstanceId": "i-0edc06e209de63c9c",
+    "ImageId": "ami-0b12a86a613a04fc6",
+    "State": {
+      "Code": 16,
+      "Name": "running"
+    }
+  }
+]
+```
+
+I've truncated the response since it's just so much data. But now we absolutely have everything there is to know about these 2 EC2 instances that are no longer in production.
+
+Now, we could have this ran serverless with a Lambda and tie it to an SNS so we can get emails of the JSON response. Just need to adjust the code a bit to accomodate this change.
+
+```python3
+import json
+import boto3
+
+SNS_TOPIC_ARN = 'arn:aws:sns:us-east-1:123456789:audit-json'
+
+ec2 = boto3.client('ec2')
+sns = boto3.client('sns')
+
+
+def lambda_handler(event, context):
+    paginator = ec2.get_paginator('describe_instances')
+    page_iterator = paginator.paginate(
+        Filters=[
+            {
+                'Name': 'tag:production',
+                'Values': [
+                    'false',
+                ]
+            }
+        ]
+    )
+
+    instances = []
+    for page in page_iterator:
+        for reservation in page['Reservations']:
+            for instance in reservation['Instances']:
+                instances.append(instance)
+
+    instances_json = json.dumps(instances, indent=2, default=str)
+
+    sns.publish(
+        TopicArn=SNS_TOPIC_ARN,
+        Subject='EC2 Non-Production Instance Audit',
+        Message=instances_json,
+    )
+
+    return {
+        'statusCode': 200,
+        'body': instances_json,
+    }
+```
+
+After a test run...
+
+![Screenshot of the JSON response sent to my email.](/posts/auditing-aws-resources/email-confirmation.png)
+
+Success! At this point, we would just delete the instances we don't need and call it mission complete. 
+
+Obviously, in production environments, you'll likely have elasticity by autoscaling your EC2 nodes. Spinning up new instances and turning them down depending on resource usage, but this is just a sandbox and a way for me to practice programming for AWS.
+
+And this could easily be expanded for other resources, but it's a little redundant. The only real changes are what clients you're using and what data you're filtering for from that client. It's structurally the same code.
+
+## Conclusion
+
+I'm getting more of an idea on how to build scripts using boto3. AWS' documentation is pretty good with examples, suggestions, and how-tos to get you started. I recently had an interview come up where Python came up. I've made applications and built a few things in multiple languages, but these questions were pretty technical and my previous experience building things really were not all that relevant. 
+That's what inspired me to make this post mainly about writing some scripts.

@@ -13,3 +13,4 @@ diagrams/
 .wrangler
 .dev.vars*
 
+/scripts/
