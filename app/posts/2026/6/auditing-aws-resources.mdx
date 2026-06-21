@@ -1,0 +1,84 @@
+---
+slug: auditing-aws-resources
+date: June TBD 2026
+author: hwasani
+name: "Building a Python script to automatically audit AWS resources"
+excerpt: "Starting from scratch with AWS: building an automated S3 backup system with Lambda event triggers, SNS email alerts, and least-privilege IAM — all as a first real cloud project."
+keywords: cloud,cloud-engineering,homelab,practice,python,aws
+---
+
+# Introduction
+
+Here we have yet another post about AWS & Cloud computing. In my last post, I built a fully fledged automated backup system using AWS resources that would store my data that required redundant copies of itself. 
+
+That was a cool project and it really taught me about scope creep, and that's something I mentioned in the beginning of that post. 
+
+To kind of go over what I mean by scope creep, what that means is that before you can build or touch anything in the cloud, you need to find the scope of your project. Identify your core requirements, maybe qualify some new features you didn't initially consider, that sort of thing. 
+
+Well, that can quickly spiral into you planning out complex systems without even really having the infrastructure built to begin with. 
+
+That's scope creep.
+
+## Idea
+
+After my project was built, I now have users, groups, an S3, SNS, a Lambda, basically all of these resources inside my console that are no longer needed. It made me think about if I were working at an enterprise that had hundreds if not thousands of cloud resources. How much old resources might I still have provisioned?
+
+Where I'm at now, it's not uncommon to find something that was left in place and mothballed as a "just in-case" measure, but because I'm newer I have no context for what these things are or their importance. We might not even have any documentation for whatever it is I might find.
+
+And then you look at what I just did, I've left all of those resources provisioned in my AWS console without deleting it. Why do I have to manually retrace my steps and find all these things I created? I can probably use AWS' boto3 module to audit these resources automatically.
+
+Let's start scoping out this project.
+
+### Research
+
+Let's take a look at some documentation for boto3 and look at the EC2 client. What I want to take a look at particularly is a method called describe_instances.
+
+Here's a snippet of how we can use this method.
+
+```python
+client = boto3.client('ec2')
+response = client.describe_instances(
+    InstanceIds=['string',], 
+    IncludeManagedResources=True|False,
+    DryRun=True|False,
+    Filters=[
+        {
+            'Name': 'string',
+            'Values': [
+                'string',
+            ]
+        },
+    ],
+    NextToken='string',
+    MaxResults=123
+)
+
+```
+As you can see, we can use the API to get really detailed on what kind of EC2 instances we want to look for. InstanceIds allows us to pass a list of strings to get all kinds of information we need about those EC2 instances, by default you query all instances.
+
+We can also use filters, which is a list of hash tables with key-value pairs for almost anything you could think of on an EC2 instance. 
+
+The other stuff isn't too important.
+
+For this method, they do recommend the use of a paginator just because of how much data can potentially be pulled from AWS using this command. Let's follow their recommendation and also use their paginator.
+
+### Proof of concept
+
+Using what we just found in the boto3 documentation, let's build a python script that would search for a specific tag called "production" with the value "false" across all of my EC2 instances.
+
+```python
+client = boto3.client('ec2')
+
+response = client.describe_instances(
+    Filters=[
+        {
+            'Name': 'tag:production',
+            'Values': [
+                'false',
+            ]
+        }
+    ] 
+)
+
+print(response)
+```
